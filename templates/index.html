@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}
+Retention Command Center
+{% endblock %}
+
+
+{% block content %}
+
+<section class="hero">
+
+<div class="hero-content">
+
+<span class="tag">
+LIVE RISK INTELLIGENCE
+</span>
+
+<h2>
+Know who is leaving
+<br>
+<span>before they leave.</span>
+</h2>
+
+<p>
+Predict customer churn, understand customer
+patterns and automatically identify the best
+retention action.
+</p>
+
+<div class="actions">
+
+<a
+href="/customers"
+class="btn primary">
+Explore Customers →
+</a>
+
+<a
+href="/analytics"
+class="btn ghost">
+View AI Patterns
+</a>
+
+</div>
+
+</div>
+
+
+<div class="hero-visual">
+
+<div class="glow"></div>
+
+<div class="floating-card card-one">
+
+<span>
+AI RISK
+</span>
+
+<b>
+84.2%
+</b>
+
+</div>
+
+
+<div class="floating-card card-two">
+
+<span>
+RETENTION
+</span>
+
+<b>
++18.6%
+</b>
+
+</div>
+
+
+<div class="live-label">
+● Live prediction
+</div>
+
+</div>
+
+</section>
+
+
+<div class="stats">
+
+<div class="stat-card">
+<span>Total Customers</span>
+<b>{{ total }}</b>
+<small>Customer intelligence base</small>
+</div>
+
+<div class="stat-card danger">
+<span>High + Critical Risk</span>
+<b>{{ risk_counts['High'] + risk_counts['Critical'] }}</b>
+<small>ML probability ≥ 60%</small>
+</div>
+
+<div class="stat-card">
+<span>Medium Risk</span>
+<b>{{ risk_counts['Medium'] }}</b>
+<small>ML probability 30–60%</small>
+</div>
+
+<div class="stat-card">
+<span>Low Risk</span>
+<b>{{ risk_counts['Low'] }}</b>
+<small>ML probability &lt; 30%</small>
+</div>
+
+<div class="stat-card revenue">
+<span>Revenue at Risk</span>
+<b>₹{{ "%.0f"|format(revenue) }}</b>
+<small>Monthly charges exposed</small>
+</div>
+
+</div>
+
+
+<div class="dashboard-grid">
+
+
+<section class="panel">
+
+<div class="panel-header">
+
+<div>
+
+<span class="tag">
+RISK SNAPSHOT
+</span>
+
+<h3>
+Customer risk distribution
+</h3>
+
+</div>
+
+<a href="/customers">
+View customers →
+</a>
+
+</div>
+
+
+<div class="chart-area">
+
+<canvas id="riskChart"></canvas>
+
+</div>
+
+</section>
+
+
+<section class="panel pattern-panel">
+
+<div class="panel-header">
+
+<div>
+
+<span class="tag">
+AI PATTERN
+</span>
+
+<h3>
+Retention Alert
+</h3>
+
+</div>
+
+<span class="risk-badge critical">
+Priority
+</span>
+
+</div>
+
+
+<div class="pattern-symbol">
+⌁
+</div>
+
+<h3>
+Month-to-month customers need attention
+</h3>
+
+<p>
+Customers with short contracts, higher monthly
+charges and electronic payments show stronger
+retention signals.
+</p>
+
+<a
+href="/analytics"
+class="text-link">
+See pattern breakdown →
+</a>
+
+</section>
+
+</div>
+
+
+<div class="quick-actions">
+
+<a href="/customers">
+<span>♙</span>
+<strong>
+Customer 360
+</strong>
+<small>
+View individual risk
+</small>
+</a>
+
+<a href="/analytics">
+<span>◒</span>
+<strong>
+AI Analytics
+</strong>
+<small>
+Explore churn patterns
+</small>
+</a>
+
+<a href="/benefits">
+<span>✦</span>
+<strong>
+Benefits Center
+</strong>
+<small>
+Create retention offers
+</small>
+</a>
+
+<a href="/feedback">
+<span>✉</span>
+<strong>
+Customer Feedback
+</strong>
+<small>
+Capture customer voice
+</small>
+</a>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+const riskCanvas =
+document.getElementById("riskChart");
+
+new Chart(
+riskCanvas,
+{
+
+type: "doughnut",
+
+data:
+{
+
+labels:
+[
+"Low",
+"Medium",
+"High",
+"Critical"
+],
+
+datasets:
+[
+{
+data:
+[
+{{ risk_counts["Low"] }},
+{{ risk_counts["Medium"] }},
+{{ risk_counts["High"] }},
+{{ risk_counts["Critical"] }}
+]
+}
+]
+
+},
+
+options:
+{
+
+responsive: true,
+
+maintainAspectRatio: false,
+
+cutout: "70%",
+
+plugins:
+{
+legend:
+{
+position: "bottom"
+}
+}
+
+}
+
+});
+
+</script>
+
+{% endblock %}

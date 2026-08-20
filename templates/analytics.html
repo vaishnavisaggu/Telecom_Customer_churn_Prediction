@@ -1,0 +1,584 @@
+{% extends "base.html" %}
+
+{% block title %}
+AI Pattern Analytics
+{% endblock %}
+
+
+{% block content %}
+
+<div class="page-intro">
+
+<div>
+
+<span class="tag">
+EXPLAINABLE AI
+</span>
+
+<h2>
+Patterns behind customer churn.
+</h2>
+
+<p>
+Understand why customers become risky and
+where the retention team should act first.
+</p>
+
+</div>
+
+<a
+href="/customers"
+class="btn primary">
+Open Risk List →
+</a>
+
+</div>
+
+
+
+<section class="model-analysis">
+
+<div class="model-hero">
+
+<div>
+<span class="tag model-tag">MACHINE LEARNING ANALYSIS</span>
+<h2>Customer churn prediction model.</h2>
+<p>
+Our churn prediction system evaluates multiple machine learning algorithms
+on an unseen 20% hold-out test set. The model with the highest test accuracy
+is selected as the best-performing model.
+</p>
+</div>
+
+<div class="model-hero-badge">
+<span>BEST MODEL</span>
+<strong>
+{{ model_performance.best_model }}
+</strong>
+</div>
+
+</div>
+
+<div class="model-section-title">
+<div>
+<span class="tag">MODEL PERFORMANCE</span>
+<h3>Accuracy and evaluation metrics</h3>
+<p>Evaluated on {{ model_performance.test_count }} customers from the unseen 20% test set.</p>
+</div>
+</div>
+
+{% if model_performance.models %}
+
+<div class="metric-cards">
+
+<div class="metric-card accuracy-card">
+<span>TEST ACCURACY</span>
+<strong>{{ "%.2f"|format(model_performance.models[0].accuracy) }}%</strong>
+<small>{{ model_performance.best_model }}</small>
+</div>
+
+<div class="metric-card">
+<span>PRECISION</span>
+<strong>{{ "%.2f"|format(model_performance.models[0].precision) }}</strong>
+<small>Best model</small>
+</div>
+
+<div class="metric-card">
+<span>RECALL</span>
+<strong>{{ "%.2f"|format(model_performance.models[0].recall) }}</strong>
+<small>Best model</small>
+</div>
+
+<div class="metric-card">
+<span>F1-SCORE</span>
+<strong>{{ "%.2f"|format(model_performance.models[0].f1) }}</strong>
+<small>Best model</small>
+</div>
+
+<div class="metric-card">
+<span>ROC-AUC</span>
+<strong>{{ "%.2f"|format(model_performance.models[0].roc_auc) }}</strong>
+<small>Best model</small>
+</div>
+
+</div>
+
+<div class="algorithm-panel">
+<div class="panel-header">
+<div>
+<span class="tag">ALGORITHMS USED</span>
+<h3>Machine Learning Algorithms</h3>
+<p>Models trained and evaluated using the same test split.</p>
+</div>
+</div>
+
+<div class="algorithm-table-wrap">
+<table class="algorithm-table">
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Test Accuracy</th>
+<th>Precision</th>
+<th>Recall</th>
+<th>F1-Score</th>
+<th>ROC-AUC</th>
+</tr>
+</thead>
+<tbody>
+{% for model in model_performance.models %}
+<tr class="{% if loop.first %}best-row{% endif %}">
+<td>
+<strong>{% if loop.first %}🏆 {% endif %}{{ model.name }}</strong>
+{% if loop.first %}<span class="best-label">BEST</span>{% endif %}
+</td>
+<td><strong class="accuracy-value">{{ "%.2f"|format(model.accuracy) }}%</strong></td>
+<td>{{ "%.2f"|format(model.precision) }}</td>
+<td>{{ "%.2f"|format(model.recall) }}</td>
+<td>{{ "%.2f"|format(model.f1) }}</td>
+<td>{{ "%.2f"|format(model.roc_auc) }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="best-model-banner">
+<div class="trophy">🏆</div>
+<div>
+<span>BEST PERFORMING MODEL</span>
+<h3>{{ model_performance.best_model }}</h3>
+<p>Selected for deployment because it achieved the highest test accuracy on unseen customer data.</p>
+</div>
+<div class="best-score">{{ "%.2f"|format(model_performance.models[0].accuracy) }}%</div>
+</div>
+
+{% else %}
+<div class="model-error">Model performance data is unavailable. Please make sure <b>churn_model.pkl</b> and <b>scaler.pkl</b> are present.</div>
+{% endif %}
+
+</section>
+
+<div class="analytics-grid">
+
+
+<section class="panel">
+
+<div class="panel-header">
+
+<div>
+
+<span class="tag">
+OVERVIEW
+</span>
+
+<h3>
+Churn Distribution
+</h3>
+
+</div>
+
+</div>
+
+<div class="chart-area">
+
+<canvas id="churnChart"></canvas>
+
+</div>
+
+</section>
+
+
+<section class="panel">
+
+<div class="panel-header">
+
+<div>
+
+<span class="tag">
+CONTRACT
+</span>
+
+<h3>
+Risk by Contract
+</h3>
+
+</div>
+
+</div>
+
+<div class="chart-area">
+
+<canvas id="contractChart"></canvas>
+
+</div>
+
+</section>
+
+
+<section class="panel">
+
+<div class="panel-header">
+
+<div>
+
+<span class="tag">
+SERVICE
+</span>
+
+<h3>
+Risk by Internet Service
+</h3>
+
+</div>
+
+</div>
+
+<div class="chart-area">
+
+<canvas id="internetChart"></canvas>
+
+</div>
+
+</section>
+
+
+<section class="panel">
+
+<div class="panel-header">
+
+<div>
+
+<span class="tag">
+PAYMENT
+</span>
+
+<h3>
+Risk by Payment Method
+</h3>
+
+</div>
+
+</div>
+
+<div class="chart-area">
+
+<canvas id="paymentChart"></canvas>
+
+</div>
+
+</section>
+
+
+<section class="panel wide">
+
+<div class="panel-header">
+
+<div>
+
+<span class="tag">
+TENURE
+</span>
+
+<h3>
+Risk Across Customer Tenure
+</h3>
+
+</div>
+
+</div>
+
+<div class="chart-area">
+
+<canvas id="tenureChart"></canvas>
+
+</div>
+
+</section>
+
+
+<section class="panel pattern-panel">
+
+<span class="tag">
+AI INSIGHT
+</span>
+
+<h2>
+Three signals deserve immediate action.
+</h2>
+
+
+<div class="signal-list">
+
+<div>
+
+<b>
+01
+</b>
+
+<span>
+Month-to-month contracts create the
+highest retention opportunity.
+</span>
+
+</div>
+
+
+<div>
+
+<b>
+02
+</b>
+
+<span>
+Lower-tenure customers are more
+vulnerable to early churn.
+</span>
+
+</div>
+
+
+<div>
+
+<b>
+03
+</b>
+
+<span>
+Retention offers should increase with
+predicted customer risk.
+</span>
+
+</div>
+
+</div>
+
+</section>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+const contractData =
+{{ contract|tojson }};
+
+const internetData =
+{{ internet|tojson }};
+
+const paymentData =
+{{ payment|tojson }};
+
+const tenureData =
+{{ tenure|tojson }};
+
+
+const chartOptions =
+{
+
+responsive: true,
+
+maintainAspectRatio: false,
+
+plugins:
+{
+legend:
+{
+position: "bottom"
+}
+}
+
+};
+
+
+new Chart(
+document.getElementById(
+"churnChart"
+),
+{
+
+type: "doughnut",
+
+data:
+{
+
+labels:
+[
+"Churned",
+"Retained"
+],
+
+datasets:
+[
+{
+data:
+[
+{{ churn_yes }},
+{{ churn_no }}
+]
+}
+]
+
+},
+
+options:
+{
+
+...chartOptions,
+
+cutout: "70%"
+
+}
+
+});
+
+
+function createBarChart(
+id,
+data
+)
+{
+
+new Chart(
+document.getElementById(id),
+{
+
+type: "bar",
+
+data:
+{
+
+labels:
+Object.keys(data),
+
+datasets:
+[
+{
+
+label:
+"Average churn probability %",
+
+data:
+Object.values(data),
+
+borderRadius:
+8
+
+}
+]
+
+},
+
+options:
+{
+
+...chartOptions,
+
+scales:
+{
+
+y:
+{
+
+beginAtZero:
+true,
+
+max:
+100
+
+}
+
+}
+
+}
+
+});
+
+}
+
+
+createBarChart(
+"contractChart",
+contractData
+);
+
+
+createBarChart(
+"internetChart",
+internetData
+);
+
+
+createBarChart(
+"paymentChart",
+paymentData
+);
+
+
+new Chart(
+document.getElementById(
+"tenureChart"
+),
+{
+
+type: "line",
+
+data:
+{
+
+labels:
+Object.keys(tenureData),
+
+datasets:
+[
+{
+
+label:
+"Risk %",
+
+data:
+Object.values(tenureData),
+
+tension:
+0.35,
+
+fill:
+true
+
+}
+]
+
+},
+
+options:
+{
+
+...chartOptions,
+
+scales:
+{
+
+y:
+{
+
+beginAtZero:
+true,
+
+max:
+100
+
+}
+
+}
+
+}
+
+});
+
+</script>
+
+{% endblock %}

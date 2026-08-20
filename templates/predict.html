@@ -1,0 +1,1493 @@
+{% extends "base.html" %}
+
+{% block title %}Predict Customer Churn{% endblock %}
+
+{% block content %}
+
+<style>
+/* =========================================================
+   PREDICT CHURN PAGE
+   ========================================================= */
+
+.predict-page {
+  width: 100%;
+}
+
+/* Hero */
+.predict-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 30px;
+  margin-bottom: 28px;
+}
+
+.predict-hero .tag,
+.form-panel .tag,
+.result-panel .tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #5b5cf6;
+  margin-bottom: 8px;
+}
+
+.predict-hero h2 {
+  margin: 0 0 10px;
+  font-size: 34px;
+  line-height: 1.15;
+  color: #ffffff !important;
+}
+
+.predict-hero p {
+  margin: 0;
+  max-width: 760px;
+  color: #737b98;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+.model-pill {
+  min-width: 240px;
+  padding: 18px 20px;
+  border: 1px solid #e4e7f1;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 25px rgba(40, 45, 80, 0.06);
+}
+
+.model-pill span {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  color: #7b819c;
+  margin-bottom: 6px;
+}
+
+.model-pill strong {
+  display: block;
+  font-size: 18px;
+  color: #171a2d;
+  margin-bottom: 5px;
+}
+
+.model-pill small {
+  color: #7b819c;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   MAIN PREDICTION LAYOUT
+   ========================================================= */
+
+.predict-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(390px, 0.85fr);
+  gap: 24px;
+  align-items: start;
+}
+
+
+/* =========================================================
+   LEFT SIDE - FORM
+   ========================================================= */
+
+.predict-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-panel {
+  background: #ffffff;
+  border: 1px solid #e4e7f1;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 8px 30px rgba(40, 45, 80, 0.05);
+}
+
+.panel-header {
+  margin-bottom: 20px;
+}
+
+.panel-header h3 {
+  margin: 0;
+  color: #171a2d;
+  font-size: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #454b68;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.form-grid input,
+.form-grid select {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 45px;
+  border: 1px solid #dfe3ee;
+  border-radius: 11px;
+  padding: 0 13px;
+  background: #fbfcff;
+  color: #20243a;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s ease;
+}
+
+.form-grid input:focus,
+.form-grid select:focus {
+  border-color: #6566f5;
+  box-shadow: 0 0 0 3px rgba(101, 102, 245, 0.10);
+  background: #ffffff;
+}
+
+.predict-button {
+  margin-top: 22px;
+  width: 100%;
+  min-height: 50px;
+  border: none;
+  border-radius: 12px;
+  background: #5b5cf6;
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.predict-button:hover {
+  background: #4849e8;
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   RIGHT SIDE - RESULT
+   ========================================================= */
+
+.prediction-result {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  position: sticky;
+  top: 20px;
+}
+
+
+/* Probability card */
+.result-score {
+  min-height: 255px;
+  box-sizing: border-box;
+  padding: 30px;
+  border-radius: 22px;
+  background: #252a48;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 15px 35px rgba(30, 35, 70, 0.16);
+}
+
+.result-score > span {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+.result-score strong {
+  font-size: 56px;
+  line-height: 1;
+  color: #35d79a;
+  margin-bottom: 12px;
+}
+
+.result-score b {
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.result-score small {
+  color: #b8bed8;
+  font-size: 14px;
+}
+
+
+/* Risk color states */
+.result-score.low strong {
+  color: #35d79a;
+}
+
+.result-score.medium strong {
+  color: #f4c95d;
+}
+
+.result-score.high strong {
+  color: #ff9b54;
+}
+
+.result-score.critical strong {
+  color: #ff5d70;
+}
+
+
+/* Result cards */
+.result-panel {
+  background: #ffffff;
+  border: 1px solid #e1e4ef;
+  border-radius: 22px;
+  padding: 25px 28px;
+  box-shadow: 0 8px 25px rgba(40, 45, 80, 0.05);
+}
+
+.result-panel h3 {
+  margin: 0 0 15px;
+  color: #171a2d;
+  font-size: 23px;
+}
+
+.risk-factor-list,
+.result-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.risk-factor-list li,
+.result-panel li {
+  padding: 13px 0;
+  border-bottom: 1px solid #eceef5;
+  color: #5c6380;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.risk-factor-list li:last-child,
+.result-panel li:last-child {
+  border-bottom: none;
+}
+
+.retention-panel {
+  background: linear-gradient(135deg, #f2fff9, #f8fffc);
+  border-color: #b8ead5;
+}
+
+.retention-panel h3 {
+  text-transform: none;
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.prediction-error {
+  margin-top: 20px;
+  padding: 15px 18px;
+  border-radius: 12px;
+  background: #fff1f2;
+  border: 1px solid #ffc7cd;
+  color: #c73448;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   ANALYTICS / GRAPHS
+   ========================================================= */
+
+.prediction-analytics {
+  margin-top: 28px;
+}
+
+.analytics-heading {
+  margin-bottom: 18px;
+}
+
+.analytics-heading .tag {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #5b5cf6;
+  margin-bottom: 7px;
+}
+
+.analytics-heading h3 {
+  margin: 0;
+  font-size: 25px;
+  color: #171a2d;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.chart-card {
+  background: #ffffff;
+  border: 1px solid #e1e4ef;
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 8px 25px rgba(40, 45, 80, 0.05);
+}
+
+.chart-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.chart-card .chart-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #171a2d;
+  margin-bottom: 5px;
+}
+
+.chart-card .chart-subtitle {
+  color: #7b819c;
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+
+.chart-container {
+  position: relative;
+  height: 270px;
+}
+
+.chart-container.small {
+  height: 250px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+  .predict-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .prediction-result {
+    position: static;
+  }
+
+  .predict-hero {
+    flex-direction: column;
+  }
+
+  .model-pill {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 700px) {
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-card.full-width {
+    grid-column: auto;
+  }
+
+  .predict-hero h2 {
+    font-size: 27px;
+  }
+
+  .result-score strong {
+    font-size: 48px;
+  }
+}
+</style>
+
+
+<div class="predict-page">
+
+  <!-- =====================================================
+       HERO
+       ===================================================== -->
+
+  <section class="predict-hero">
+
+    <div>
+      <span class="tag">AI CHURN PREDICTION</span>
+
+      <h2>
+        Predict churn before the customer leaves.
+      </h2>
+
+      <p>
+        Enter customer and service information. The deployed
+        machine learning model returns a churn probability, risk
+        level, key risk factors and a retention action.
+      </p>
+    </div>
+
+    <div class="model-pill">
+
+      <span>DEPLOYED MODEL</span>
+
+      <strong>{{ model_name|default("XGBoost") }}</strong>
+
+      <small>
+        Stratified holdout evaluation · 84%+ ROC-AUC
+      </small>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       ERROR
+       ===================================================== -->
+
+  {% if error %}
+  <div class="prediction-error">
+    {{ error }}
+  </div>
+  {% endif %}
+
+
+  <!-- =====================================================
+       FORM + RESULT
+       ===================================================== -->
+
+  <div class="predict-layout">
+
+    <!-- ===================================================
+         LEFT: EXISTING PREDICTION FORM
+         =================================================== -->
+
+    <form method="POST" class="predict-form">
+
+      <!-- QUICK PREDICT LOOKUP -->
+      {% if sample_customers %}
+      <section class="form-panel" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 18px;">
+        <div class="panel-header" style="margin-bottom: 12px;">
+          <div>
+            <span class="tag" style="background: #5b5cf6; color: white; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">SIMPLE PREDICT</span>
+            <h3 style="font-size: 1.1rem; margin-top: 4px;">⚡ Quick Customer Predict</h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin-top: 2px;">
+              Pick a dataset customer or click a sample button below for 1-click prediction.
+            </p>
+          </div>
+        </div>
+
+        <!-- 1-Click Quick Action Buttons -->
+        <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+          <button type="button" onclick="loadCustomerRecord('9237-HQJOC')" style="background: #fef2f2; border: 1px solid #fca5a5; color: #dc2626; padding: 8px 14px; border-radius: 6px; font-size: 0.88rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            🔥 Load High Risk Customer Sample (9237-HQJOC)
+          </button>
+          <button type="button" onclick="loadCustomerRecord('5575-GNVDE')" style="background: #f0fdf4; border: 1px solid #86efac; color: #16a34a; padding: 8px 14px; border-radius: 6px; font-size: 0.88rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            🛡️ Load Low Risk Customer Sample (5575-GNVDE)
+          </button>
+        </div>
+
+        <div>
+          <select id="datasetCustomerSelect" onchange="loadCustomerRecord(this.value)" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.92rem; background: white; color: #1e293b; font-weight: 500;">
+            <option value="">-- Or select any customer ID from telco_churn.csv --</option>
+            {% for cust in sample_customers %}
+            <option value="{{ cust.customerID }}" {% if form_values and form_values.customerID == cust.customerID %}selected{% endif %}>
+              {{ cust.customerID }} | {{ cust.gender }}, {{ cust.InternetService }}, {{ cust.Contract }}, {{ cust.tenure }} mos | Bill: ₹{{ cust.MonthlyCharges }} | Actual Churn: {{ cust.Churn }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </section>
+      {% endif %}
+
+      <!-- CUSTOMER -->
+
+      <section class="form-panel">
+
+        <div class="panel-header">
+
+          <div>
+
+            <span class="tag">CUSTOMER</span>
+
+            <h3>
+              Customer information
+            </h3>
+
+          </div>
+
+        </div>
+
+
+        <div class="form-grid">
+
+          <label>
+            Customer ID
+
+            <input
+              name="customerID"
+              value="{{ form_values.customerID if form_values else '7590-VHVEG' }}"
+            >
+          </label>
+
+
+          <label>
+            Gender
+
+            <select name="gender">
+
+              <option {% if form_values and form_values.gender == 'Female' %}selected{% endif %}>Female</option>
+              <option {% if form_values and form_values.gender == 'Male' %}selected{% endif %}>Male</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Senior Citizen
+
+            <select name="SeniorCitizen">
+
+              <option value="0" {% if form_values and form_values.SeniorCitizen == 0 %}selected{% endif %}>No</option>
+              <option value="1" {% if form_values and form_values.SeniorCitizen == 1 %}selected{% endif %}>Yes</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Partner
+
+            <select name="Partner">
+
+              <option {% if form_values and form_values.Partner == 'No' %}selected{% endif %}>No</option>
+              <option {% if form_values and form_values.Partner == 'Yes' %}selected{% endif %}>Yes</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Dependents
+
+            <select name="Dependents">
+
+              <option {% if form_values and form_values.Dependents == 'No' %}selected{% endif %}>No</option>
+              <option {% if form_values and form_values.Dependents == 'Yes' %}selected{% endif %}>Yes</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Tenure (months)
+
+            <input
+              type="number"
+              name="tenure"
+              min="0"
+              max="100"
+              value="{{ form_values.tenure if form_values else 12 }}"
+            >
+
+          </label>
+
+        </div>
+
+      </section>
+
+
+      <!-- SERVICES -->
+
+      <section class="form-panel">
+
+        <div class="panel-header">
+
+          <div>
+
+            <span class="tag">SERVICES</span>
+
+            <h3>
+              Service information
+            </h3>
+
+          </div>
+
+        </div>
+
+
+        <div class="form-grid">
+
+
+          <label>
+            Phone Service
+
+            <select name="PhoneService">
+
+              <option {% if form_values and form_values.PhoneService == 'Yes' %}selected{% endif %}>Yes</option>
+              <option {% if form_values and form_values.PhoneService == 'No' %}selected{% endif %}>No</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Multiple Lines
+
+            <select name="MultipleLines">
+
+              <option {% if form_values and form_values.MultipleLines == 'No' %}selected{% endif %}>No</option>
+              <option {% if form_values and form_values.MultipleLines == 'Yes' %}selected{% endif %}>Yes</option>
+              <option {% if form_values and form_values.MultipleLines == 'No phone service' %}selected{% endif %}>No phone service</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Internet Service
+
+            <select name="InternetService">
+
+              <option {% if form_values and form_values.InternetService == 'DSL' %}selected{% endif %}>DSL</option>
+              <option {% if form_values and form_values.InternetService == 'Fiber optic' %}selected{% endif %}>Fiber optic</option>
+              <option {% if form_values and form_values.InternetService == 'No' %}selected{% endif %}>No</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Online Security
+
+            <select name="OnlineSecurity">
+
+              <option {% if form_values and form_values.OnlineSecurity == 'No' %}selected{% endif %}>No</option>
+              <option {% if form_values and form_values.OnlineSecurity == 'Yes' %}selected{% endif %}>Yes</option>
+              <option {% if form_values and form_values.OnlineSecurity == 'No internet service' %}selected{% endif %}>No internet service</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Online Backup
+
+            <select name="OnlineBackup">
+
+              <option {% if form_values and form_values.OnlineBackup == 'No' %}selected{% endif %}>No</option>
+              <option {% if form_values and form_values.OnlineBackup == 'Yes' %}selected{% endif %}>Yes</option>
+              <option {% if form_values and form_values.OnlineBackup == 'No internet service' %}selected{% endif %}>No internet service</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Device Protection
+
+            <select name="DeviceProtection">
+
+              <option {% if form_values and form_values.DeviceProtection == 'No' %}selected{% endif %}>No</option>
+              <option {% if form_values and form_values.DeviceProtection == 'Yes' %}selected{% endif %}>Yes</option>
+              <option {% if form_values and form_values.DeviceProtection == 'No internet service' %}selected{% endif %}>No internet service</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Tech Support
+
+            <select name="TechSupport">
+
+              <option {% if form_values and form_values.TechSupport == 'No' %}selected{% endif %}>No</option>
+              <option {% if form_values and form_values.TechSupport == 'Yes' %}selected{% endif %}>Yes</option>
+              <option {% if form_values and form_values.TechSupport == 'No internet service' %}selected{% endif %}>No internet service</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Streaming TV
+
+            <select name="StreamingTV">
+
+              <option {% if form_values and form_values.StreamingTV == 'No' %}selected{% endif %}>No</option>
+              <option {% if form_values and form_values.StreamingTV == 'Yes' %}selected{% endif %}>Yes</option>
+              <option {% if form_values and form_values.StreamingTV == 'No internet service' %}selected{% endif %}>No internet service</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Streaming Movies
+
+            <select name="StreamingMovies">
+
+              <option {% if form_values and form_values.StreamingMovies == 'No' %}selected{% endif %}>No</option>
+              <option {% if form_values and form_values.StreamingMovies == 'Yes' %}selected{% endif %}>Yes</option>
+              <option {% if form_values and form_values.StreamingMovies == 'No internet service' %}selected{% endif %}>No internet service</option>
+
+            </select>
+
+          </label>
+
+
+        </div>
+
+      </section>
+
+
+      <!-- BILLING -->
+
+      <section class="form-panel">
+
+        <div class="panel-header">
+
+          <div>
+
+            <span class="tag">BILLING</span>
+
+            <h3>
+              Contract and billing
+            </h3>
+
+          </div>
+
+        </div>
+
+
+        <div class="form-grid">
+
+
+          <label>
+            Contract
+
+            <select name="Contract">
+
+              <option {% if form_values and form_values.Contract == 'Month-to-month' %}selected{% endif %}>Month-to-month</option>
+              <option {% if form_values and form_values.Contract == 'One year' %}selected{% endif %}>One year</option>
+              <option {% if form_values and form_values.Contract == 'Two year' %}selected{% endif %}>Two year</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Paperless Billing
+
+            <select name="PaperlessBilling">
+
+              <option {% if form_values and form_values.PaperlessBilling == 'Yes' %}selected{% endif %}>Yes</option>
+              <option {% if form_values and form_values.PaperlessBilling == 'No' %}selected{% endif %}>No</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Payment Method
+
+            <select name="PaymentMethod">
+
+              <option {% if form_values and form_values.PaymentMethod == 'Electronic check' %}selected{% endif %}>Electronic check</option>
+              <option {% if form_values and form_values.PaymentMethod == 'Mailed check' %}selected{% endif %}>Mailed check</option>
+              <option {% if form_values and form_values.PaymentMethod == 'Bank transfer (automatic)' %}selected{% endif %}>Bank transfer (automatic)</option>
+              <option {% if form_values and form_values.PaymentMethod == 'Credit card (automatic)' %}selected{% endif %}>Credit card (automatic)</option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+            Monthly Charges
+
+            <input
+              type="number"
+              step="0.01"
+              name="MonthlyCharges"
+              value="{{ form_values.MonthlyCharges if form_values else 70 }}"
+            >
+
+          </label>
+
+
+          <label>
+            Total Charges
+
+            <input
+              type="number"
+              step="0.01"
+              name="TotalCharges"
+              value="{{ form_values.TotalCharges if form_values else 840 }}"
+            >
+
+          </label>
+
+
+        </div>
+
+
+        <button
+          class="btn primary predict-button"
+          type="submit"
+        >
+          🔮 Predict Churn
+        </button>
+
+      </section>
+
+
+    </form>
+
+
+    <!-- ===================================================
+         RIGHT: PREDICTION RESULT
+         =================================================== -->
+
+    {% if result %}
+
+    <section class="prediction-result">
+
+
+      <!-- PROBABILITY -->
+
+      <div class="result-score {{ result.risk|lower }}">
+
+        <span>
+          CHURN PROBABILITY
+        </span>
+
+        <strong>
+          {{ result.probability }}%
+        </strong>
+
+        <b>
+          {{
+            'LIKELY TO CHURN'
+            if result.prediction == 'Yes'
+            else
+            'LIKELY TO STAY'
+          }}
+        </b>
+
+        <small>
+          {{ result.risk }} risk
+        </small>
+
+        {% if result.actual_churn %}
+        <div style="margin-top: 10px; padding: 4px 12px; border-radius: 20px; background: rgba(255, 255, 255, 0.25); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block;">
+          Dataset Truth: Churn = {{ result.actual_churn }}
+        </div>
+        {% endif %}
+
+      </div>
+
+
+      <!-- RISK FACTORS -->
+
+      <div class="result-panel">
+
+        <span class="tag">
+          WHY THIS CUSTOMER IS AT RISK
+        </span>
+
+        <h3>
+          Key risk factors
+        </h3>
+
+
+        {% if result.factors %}
+
+        <ul class="risk-factor-list">
+
+          {% for factor in result.factors %}
+
+          <li>
+            <span style="
+              display:inline-block;
+              width:10px;
+              height:10px;
+              border-radius:50%;
+              background:#ef4962;
+              margin-right:10px;
+            "></span>
+
+            {{ factor }}
+
+          </li>
+
+          {% endfor %}
+
+        </ul>
+
+        {% else %}
+
+        <p>
+          No major rule-based risk signals were detected.
+        </p>
+
+        {% endif %}
+
+      </div>
+
+
+      <!-- RETENTION RECOMMENDATION -->
+
+      <div class="result-panel retention-panel">
+
+        <span class="tag">
+          RETENTION RECOMMENDATION
+        </span>
+
+        <h3>
+          {{ result.priority }} priority action
+        </h3>
+
+
+        <ul>
+
+          {% for action in result.actions %}
+
+          <li>
+            {{ action }}
+          </li>
+
+          {% endfor %}
+
+        </ul>
+
+      </div>
+
+
+    </section>
+
+    {% endif %}
+
+  </div>
+
+
+  <!-- =====================================================
+       GRAPHS
+       ===================================================== -->
+
+  {% if result %}
+
+  <section class="prediction-analytics">
+
+
+    <div class="analytics-heading">
+
+      <span class="tag">
+        CUSTOMER ANALYTICS
+      </span>
+
+      <h3>
+        Customer risk visualization
+      </h3>
+
+    </div>
+
+
+    <div class="analytics-grid">
+
+
+      <!-- =================================================
+           GRAPH 1 - CHURN PROBABILITY
+           ================================================= -->
+
+      <div class="chart-card">
+
+        <div class="chart-title">
+          Churn probability
+        </div>
+
+        <div class="chart-subtitle">
+          Predicted probability for this customer
+        </div>
+
+        <div class="chart-container small">
+
+          <canvas id="churnProbabilityChart"></canvas>
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           GRAPH 2 - CUSTOMER METRICS
+           ================================================= -->
+
+      <div class="chart-card">
+
+        <div class="chart-title">
+          Customer profile
+        </div>
+
+        <div class="chart-subtitle">
+          Tenure and billing metrics
+        </div>
+
+        <div class="chart-container small">
+
+          <canvas id="customerMetricsChart"></canvas>
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           GRAPH 3 - SERVICE USAGE
+           ================================================= -->
+
+      <div class="chart-card full-width">
+
+        <div class="chart-title">
+          Service usage analysis
+        </div>
+
+        <div class="chart-subtitle">
+          Services currently enabled for this customer
+        </div>
+
+        <div class="chart-container">
+
+          <canvas id="serviceChart"></canvas>
+
+        </div>
+
+      </div>
+
+
+    </div>
+
+  </section>
+
+  {% endif %}
+
+
+</div>
+
+
+<!-- =======================================================
+     CHARTS
+     ======================================================= -->
+
+{% if result %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+  /* -----------------------------------------------
+     Values from existing Flask/Jinja data
+     ----------------------------------------------- */
+
+  const churnProbability =
+    Number("{{ result.probability }}") || 0;
+
+  const tenure =
+    Number("{{ request.form.get('tenure', 0) }}") || 0;
+
+  const monthlyCharges =
+    Number("{{ request.form.get('MonthlyCharges', 0) }}") || 0;
+
+  const totalCharges =
+    Number("{{ request.form.get('TotalCharges', 0) }}") || 0;
+
+
+  /* -----------------------------------------------
+     GRAPH 1
+     Churn Probability
+     ----------------------------------------------- */
+
+  const probabilityCanvas =
+    document.getElementById("churnProbabilityChart");
+
+  if (probabilityCanvas) {
+
+    new Chart(probabilityCanvas, {
+
+      type: "doughnut",
+
+      data: {
+
+        labels: [
+          "Churn Probability",
+          "Remaining"
+        ],
+
+        datasets: [{
+
+          data: [
+            churnProbability,
+            Math.max(0, 100 - churnProbability)
+          ],
+
+          backgroundColor: [
+            "#5b5cf6",
+            "#e9ebf4"
+          ],
+
+          borderWidth: 0
+
+        }]
+
+      },
+
+      options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        cutout: "72%",
+
+        plugins: {
+
+          legend: {
+            position: "bottom"
+          },
+
+          tooltip: {
+
+            callbacks: {
+
+              label: function(context) {
+
+                return context.label +
+                  ": " +
+                  context.raw.toFixed(1) +
+                  "%";
+
+              }
+
+            }
+
+          }
+
+        }
+
+      }
+
+    });
+
+  }
+
+
+  /* -----------------------------------------------
+     GRAPH 2
+     Customer Metrics
+     ----------------------------------------------- */
+
+  const metricsCanvas =
+    document.getElementById("customerMetricsChart");
+
+  if (metricsCanvas) {
+
+    new Chart(metricsCanvas, {
+
+      type: "bar",
+
+      data: {
+
+        labels: [
+          "Tenure",
+          "Monthly Charges",
+          "Total Charges"
+        ],
+
+        datasets: [{
+
+          label: "Customer Value",
+
+          data: [
+            tenure,
+            monthlyCharges,
+            totalCharges
+          ],
+
+          backgroundColor: [
+            "#5b5cf6",
+            "#35b9a0",
+            "#f2a65a"
+          ],
+
+          borderRadius: 8,
+
+          borderSkipped: false
+
+        }]
+
+      },
+
+      options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        plugins: {
+
+          legend: {
+            display: false
+          }
+
+        },
+
+        scales: {
+
+          y: {
+
+            beginAtZero: true,
+
+            grid: {
+              color: "#eef0f6"
+            }
+
+          },
+
+          x: {
+
+            grid: {
+              display: false
+            }
+
+          }
+
+        }
+
+      }
+
+    });
+
+  }
+
+
+  /* -----------------------------------------------
+     GRAPH 3
+     Service Usage
+     ----------------------------------------------- */
+
+  const serviceCanvas =
+    document.getElementById("serviceChart");
+
+  if (serviceCanvas) {
+
+    const serviceNames = [
+      "Phone Service",
+      "Multiple Lines",
+      "Online Security",
+      "Online Backup",
+      "Device Protection",
+      "Tech Support",
+      "Streaming TV",
+      "Streaming Movies"
+    ];
+
+
+    const serviceFields = [
+      "PhoneService",
+      "MultipleLines",
+      "OnlineSecurity",
+      "OnlineBackup",
+      "DeviceProtection",
+      "TechSupport",
+      "StreamingTV",
+      "StreamingMovies"
+    ];
+
+
+    const customerData = {{ result.customer | tojson | safe if result and result.customer else '{}' }};
+
+    const serviceValues = serviceFields.map(function(field) {
+      if (customerData && customerData[field] !== undefined) {
+        const val = String(customerData[field]).toLowerCase();
+        return (val === "yes") ? 1 : 0;
+      }
+      const element = document.querySelector('[name="' + field + '"]');
+      if (!element) return 0;
+      const value = String(element.value).toLowerCase();
+      return (value === "yes") ? 1 : 0;
+    });
+
+
+    new Chart(serviceCanvas, {
+
+      type: "bar",
+
+      data: {
+
+        labels: serviceNames,
+
+        datasets: [{
+
+          label: "Service Enabled",
+
+          data: serviceValues,
+
+          backgroundColor: "#5b5cf6",
+
+          borderRadius: 6,
+
+          borderSkipped: false,
+
+          barThickness: 22
+
+        }]
+
+      },
+
+      options: {
+
+        indexAxis: "y",
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        plugins: {
+
+          legend: {
+            display: false
+          },
+
+          tooltip: {
+
+            callbacks: {
+
+              label: function(context) {
+
+                return context.raw === 1
+                  ? " Enabled"
+                  : " Not enabled";
+
+              }
+
+            }
+
+          }
+
+        },
+
+        scales: {
+
+          x: {
+
+            beginAtZero: true,
+
+            min: 0,
+
+            max: 1.8,
+
+            ticks: {
+
+              stepSize: 1,
+
+              callback: function(value) {
+
+                if (value === 0) return "No";
+
+                if (value === 1) return "Yes";
+
+                return "";
+
+              }
+
+            },
+
+            grid: {
+
+              color: "#eef0f6"
+
+            }
+
+          },
+
+          y: {
+
+            grid: {
+              display: false
+            }
+
+          }
+
+        }
+
+      }
+
+    });
+
+  }
+
+});
+
+</script>
+
+{% endif %}
+
+<script>
+  const sampleCustomersData = {{ sample_customers | tojson | safe if sample_customers else '[]' }};
+
+  function loadCustomerRecord(custID) {
+    if (!custID || !sampleCustomersData) return;
+    const match = sampleCustomersData.find(c => String(c.customerID) === String(custID));
+    if (!match) return;
+
+    for (const key in match) {
+      const el = document.querySelector('[name="' + key + '"]');
+      if (el) {
+        el.value = match[key];
+      }
+    }
+    const formEl = document.querySelector('.predict-form');
+    if (formEl) {
+      formEl.submit();
+    }
+  }
+</script>
+
+{% endblock %}

@@ -1,0 +1,1540 @@
+{% extends "base.html" %}
+
+{% block title %}
+Benefits & Coupon Center
+{% endblock %}
+
+{% block content %}
+
+<div class="page-intro">
+
+    <div>
+
+        <span class="tag">
+            RETENTION STUDIO
+        </span>
+
+        <h2>
+            Turn risk into a reason to stay.
+        </h2>
+
+        <p>
+            Select a customer to view personalized churn
+            analytics and a condition-based retention offer.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="benefit-layout">
+
+
+    <!-- ==========================================
+         CUSTOMER SELECTOR
+    =========================================== -->
+
+    <aside class="selector panel">
+
+        <h3>
+            Select Customer
+        </h3>
+
+
+        <input
+            id="benefitSearch"
+            type="text"
+            autocomplete="off"
+            placeholder="Search customer ID..."
+        >
+
+
+        <div
+            id="searchStatus"
+            class="search-status"
+        ></div>
+
+
+        <div id="benefitList">
+
+            {% for c in customers %}
+
+            <button
+                type="button"
+                class="customer-select"
+                data-customer-id="{{ c.customerID }}"
+                onclick="loadBenefit('{{ c.customerID }}')"
+            >
+
+                <span>
+                    {{ c.customerID }}
+                </span>
+
+                <b class="{{ c.Risk|lower }}">
+                    {{ c.Risk }}
+                </b>
+
+            </button>
+
+            {% endfor %}
+
+        </div>
+
+    </aside>
+
+
+    <!-- ==========================================
+         CUSTOMER RESULT
+    =========================================== -->
+
+    <section
+        class="benefit-result"
+        id="benefitResult"
+    >
+
+        <div class="empty-state">
+
+            <div>
+                📊
+            </div>
+
+            <h2>
+                Select a customer
+            </h2>
+
+            <p>
+                Select a customer from the left to view
+                churn probability, customer metrics,
+                service profile and a personalized
+                retention offer.
+            </p>
+
+        </div>
+
+    </section>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+/* =====================================================
+   CUSTOMER SEARCH
+   Optimized for thousands of customers.
+===================================================== */
+
+(function () {
+
+    const searchBox =
+        document.getElementById("benefitSearch");
+
+    const customerList =
+        document.getElementById("benefitList");
+
+    const searchStatus =
+        document.getElementById("searchStatus");
+
+
+    if (!searchBox || !customerList) {
+        return;
+    }
+
+
+    const customerButtons = Array.from(
+        customerList.querySelectorAll(
+            ".customer-select"
+        )
+    );
+
+
+    let searchTimer = null;
+
+
+    /*
+       Store customer IDs once.
+
+       This avoids using innerText repeatedly,
+       which was causing the browser to recalculate
+       layout while typing.
+    */
+
+    const customers = customerButtons.map(
+        function (button) {
+
+            return {
+
+                button: button,
+
+                id: (
+                    button.dataset.customerId || ""
+                ).toLowerCase()
+
+            };
+
+        }
+    );
+
+
+    function updateSearch() {
+
+        const search =
+            searchBox.value
+                .trim()
+                .toLowerCase();
+
+
+        let visibleCount = 0;
+
+
+        customers.forEach(
+            function (customer) {
+
+                const matches =
+                    search === "" ||
+                    customer.id.includes(search);
+
+
+                if (matches) {
+
+                    customer.button.style.display =
+                        "flex";
+
+                    visibleCount++;
+
+                } else {
+
+                    customer.button.style.display =
+                        "none";
+
+                }
+
+            }
+        );
+
+
+        /*
+           Search status
+        */
+
+        if (search === "") {
+
+            searchStatus.textContent = "";
+
+        } else if (visibleCount === 0) {
+
+            searchStatus.textContent =
+                "No customers found";
+
+        } else if (visibleCount === 1) {
+
+            searchStatus.textContent =
+                "1 customer found";
+
+        } else {
+
+            searchStatus.textContent =
+                visibleCount +
+                " customers found";
+
+        }
+
+    }
+
+
+    searchBox.addEventListener(
+        "input",
+        function () {
+
+            clearTimeout(searchTimer);
+
+
+            /*
+               Small debounce prevents the browser
+               from running the filter on every single
+               keyboard event.
+            */
+
+            searchTimer = setTimeout(
+                updateSearch,
+                80
+            );
+
+        }
+    );
+
+
+})();
+
+
+/* =====================================================
+   CHART STORAGE
+===================================================== */
+
+let benefitCharts = [];
+
+
+function destroyBenefitCharts() {
+
+    benefitCharts.forEach(
+        function (chart) {
+
+            try {
+
+                chart.destroy();
+
+            } catch (error) {
+
+                console.warn(
+                    "Chart cleanup error:",
+                    error
+                );
+
+            }
+
+        }
+    );
+
+
+    benefitCharts = [];
+
+}
+
+
+/* =====================================================
+   SAFE VALUE
+===================================================== */
+
+function safe(value) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    ) {
+
+        return "N/A";
+
+    }
+
+    return value;
+
+}
+
+
+/* =====================================================
+   LOAD CUSTOMER
+===================================================== */
+
+async function loadBenefit(id) {
+
+    destroyBenefitCharts();
+
+
+    const resultPanel =
+        document.getElementById(
+            "benefitResult"
+        );
+
+
+    resultPanel.innerHTML = `
+
+        <div class="empty-state">
+
+            <div>
+                ⏳
+            </div>
+
+            <h2>
+                Loading customer...
+            </h2>
+
+            <p>
+                Generating personalized retention
+                analytics and coupon.
+            </p>
+
+        </div>
+
+    `;
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/benefit/" +
+                encodeURIComponent(id),
+                {
+                    method: "GET",
+                    cache: "no-store"
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            !response.ok ||
+            data.error
+        ) {
+
+            resultPanel.innerHTML = `
+
+                <div class="empty-state">
+
+                    <div>
+                        ⚠️
+                    </div>
+
+                    <h2>
+                        Customer not found
+                    </h2>
+
+                    <p>
+                        ${safe(data.error)}
+                    </p>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        const c =
+            data.customer;
+
+
+        const probability =
+            Number(
+                data.probability ||
+                c.ChurnProbability ||
+                0
+            );
+
+
+        const monthly =
+            Number(
+                c.MonthlyCharges || 0
+            );
+
+
+        const total =
+            Number(
+                c.TotalCharges || 0
+            );
+
+
+        const tenure =
+            Number(
+                c.tenure || 0
+            );
+
+
+        const risk =
+            String(
+                data.risk ||
+                c.Risk ||
+                "Low"
+            );
+
+
+        const riskClass =
+            risk.toLowerCase();
+
+
+        const discount =
+            Number(
+                data.discount || 0
+            );
+
+
+        const bonus =
+            Number(
+                data.bonus || 0
+            );
+
+
+        const conditions =
+            Array.isArray(data.conditions)
+                ? data.conditions
+                : [];
+
+
+        /* ==========================================
+           CUSTOMER RESULT HTML
+        =========================================== */
+
+        resultPanel.innerHTML = `
+
+            <!-- CUSTOMER HEADER -->
+
+            <div class="offer-head">
+
+                <div>
+
+                    <span class="tag">
+                        PERSONALIZED RETENTION ANALYSIS
+                    </span>
+
+                    <h2>
+                        ${safe(c.customerID)}
+                    </h2>
+
+                    <p>
+                        ${safe(data.message)}
+                    </p>
+
+                </div>
+
+
+                <span
+                    class="risk-ring ${riskClass}"
+                >
+
+                    ${risk}
+
+                    <small>
+                        ${probability.toFixed(1)}%
+                    </small>
+
+                </span>
+
+            </div>
+
+
+            <!-- ==================================
+                 CUSTOMER METRICS
+            =================================== -->
+
+            <div
+                class="offer-grid customer-metrics"
+            >
+
+                <div>
+
+                    <span>
+                        Churn Probability
+                    </span>
+
+                    <b>
+                        ${probability.toFixed(1)}%
+                    </b>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Monthly Charges
+                    </span>
+
+                    <b>
+                        ₹${monthly.toFixed(2)}
+                    </b>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Tenure
+                    </span>
+
+                    <b>
+                        ${tenure} months
+                    </b>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Total Charges
+                    </span>
+
+                    <b>
+                        ₹${total.toFixed(2)}
+                    </b>
+
+                </div>
+
+            </div>
+
+
+            <!-- ==================================
+                 CUSTOMER GRAPHS
+            =================================== -->
+
+            <div class="customer-chart-grid">
+
+
+                <!-- CHURN RISK -->
+
+                <div class="customer-chart-card">
+
+                    <div class="chart-title">
+
+                        <span>
+                            🎯
+                        </span>
+
+                        <div>
+
+                            <b>
+                                Churn Risk
+                            </b>
+
+                            <small>
+                                Probability of leaving
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="chart-box">
+
+                        <canvas
+                            id="churnRiskChart"
+                        ></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <!-- CHARGES -->
+
+                <div class="customer-chart-card">
+
+                    <div class="chart-title">
+
+                        <span>
+                            💰
+                        </span>
+
+                        <div>
+
+                            <b>
+                                Customer Charges
+                            </b>
+
+                            <small>
+                                Monthly vs total charges
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="chart-box">
+
+                        <canvas
+                            id="chargesChart"
+                        ></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <!-- TENURE -->
+
+                <div class="customer-chart-card">
+
+                    <div class="chart-title">
+
+                        <span>
+                            ⏳
+                        </span>
+
+                        <div>
+
+                            <b>
+                                Customer Tenure
+                            </b>
+
+                            <small>
+                                Length of relationship
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="chart-box">
+
+                        <canvas
+                            id="tenureChart"
+                        ></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SERVICE PROFILE -->
+
+                <div class="customer-chart-card">
+
+                    <div class="chart-title">
+
+                        <span>
+                            📡
+                        </span>
+
+                        <div>
+
+                            <b>
+                                Service Profile
+                            </b>
+
+                            <small>
+                                Current account configuration
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="profile-details">
+
+                        <div>
+
+                            <span>
+                                Contract
+                            </span>
+
+                            <b>
+                                ${safe(c.Contract)}
+                            </b>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Internet
+                            </span>
+
+                            <b>
+                                ${safe(c.InternetService)}
+                            </b>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Payment
+                            </span>
+
+                            <b>
+                                ${safe(c.PaymentMethod)}
+                            </b>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Tech Support
+                            </span>
+
+                            <b>
+                                ${safe(c.TechSupport)}
+                            </b>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Online Security
+                            </span>
+
+                            <b>
+                                ${safe(c.OnlineSecurity)}
+                            </b>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Paperless Billing
+                            </span>
+
+                            <b>
+                                ${safe(c.PaperlessBilling)}
+                            </b>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ==================================
+                 AI RETENTION RECOMMENDATION
+            =================================== -->
+
+            <div class="retention-card">
+
+                <div class="retention-icon">
+                    🎯
+                </div>
+
+
+                <div>
+
+                    <span class="tag">
+                        AI RETENTION RECOMMENDATION
+                    </span>
+
+
+                    <h3>
+                        ${safe(data.type)}
+                    </h3>
+
+
+                    <p>
+                        ${safe(data.reason)}
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- ==================================
+                 OFFER SUMMARY
+            =================================== -->
+
+            <div
+                class="offer-grid offer-summary"
+            >
+
+                <div>
+
+                    <span>
+                        Discount
+                    </span>
+
+                    <b>
+                        ${discount.toFixed(0)}% OFF
+                    </b>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Service Upgrade
+                    </span>
+
+                    <b>
+                        ${safe(data.speed)}
+                    </b>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Loyalty Bonus
+                    </span>
+
+                    <b>
+                        ₹${bonus.toFixed(0)}
+                    </b>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Revenue Protected
+                    </span>
+
+                    <b>
+                        ₹${monthly.toFixed(0)}/mo
+                    </b>
+
+                </div>
+
+            </div>
+
+
+            <!-- ==================================
+                 COUPON
+            =================================== -->
+
+            <div class="coupon">
+
+                <span>
+                    PERSONAL COUPON
+                </span>
+
+
+                <strong>
+                    ${safe(data.coupon)}
+                </strong>
+
+
+                <button
+                    type="button"
+                    onclick="copyCoupon('${safe(data.coupon)}')"
+                >
+                    Copy Coupon
+                </button>
+
+            </div>
+
+
+            <!-- ==================================
+                 COUPON CONDITIONS
+            =================================== -->
+
+            <div class="offer-conditions">
+
+                <div class="condition-header">
+
+                    <span>
+                        🎟️
+                    </span>
+
+                    <div>
+
+                        <b>
+                            Coupon Eligibility
+                        </b>
+
+                        <small>
+                            Required conditions for this offer
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <div class="conditions-list">
+
+                    ${
+                        conditions.length
+                        ? conditions.map(
+                            function (condition) {
+
+                                return `
+
+                                    <div
+                                        class="condition-item"
+                                    >
+
+                                        <span>
+                                            ✓
+                                        </span>
+
+                                        ${safe(condition)}
+
+                                    </div>
+
+                                `;
+
+                            }
+                        ).join("")
+                        : `
+
+                            <div
+                                class="condition-item"
+                            >
+
+                                <span>
+                                    ✓
+                                </span>
+
+                                Offer subject to account eligibility.
+
+                            </div>
+
+                        `
+                    }
+
+                </div>
+
+            </div>
+
+
+            <!-- ==================================
+                 WHY THIS COUPON
+            =================================== -->
+
+            <div class="offer-reason">
+
+                <span>
+                    🤖
+                </span>
+
+
+                <div>
+
+                    <b>
+                        Why was this coupon selected?
+                    </b>
+
+
+                    <p>
+                        ${safe(data.reason)}
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- ==================================
+                 RETENTION MESSAGE
+            =================================== -->
+
+            <div class="message-card">
+
+                <b>
+                    Suggested Retention Message
+                </b>
+
+
+                <p>
+
+                    Hi ${safe(c.customerID)},
+
+                    we value your loyalty.
+
+                    You are eligible for
+
+                    ${safe(data.speed).toLowerCase()}
+
+                    and
+
+                    ${discount.toFixed(0)}% savings
+
+                    under coupon
+
+                    <b>
+                        ${safe(data.coupon)}
+                    </b>,
+
+                    subject to the conditions above.
+
+                </p>
+
+            </div>
+
+        `;
+
+
+        createBenefitCharts(
+            probability,
+            monthly,
+            total,
+            tenure
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Benefit loading error:",
+            error
+        );
+
+
+        resultPanel.innerHTML = `
+
+            <div class="empty-state">
+
+                <div>
+                    ⚠️
+                </div>
+
+                <h2>
+                    Unable to load customer
+                </h2>
+
+                <p>
+                    ${safe(error.message)}
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+/* =====================================================
+   CREATE CHARTS
+===================================================== */
+
+function createBenefitCharts(
+    probability,
+    monthly,
+    total,
+    tenure
+) {
+
+
+    if (
+        typeof Chart === "undefined"
+    ) {
+
+        console.error(
+            "Chart.js is not loaded."
+        );
+
+        return;
+
+    }
+
+
+    const commonLegend = {
+
+        labels: {
+
+            color: "#aeb3c4",
+
+            padding: 14
+
+        }
+
+    };
+
+
+    /* ==========================================
+       CHURN RISK
+    =========================================== */
+
+    const churnCanvas =
+        document.getElementById(
+            "churnRiskChart"
+        );
+
+
+    if (churnCanvas) {
+
+        benefitCharts.push(
+
+            new Chart(
+                churnCanvas,
+                {
+
+                    type: "doughnut",
+
+                    data: {
+
+                        labels: [
+                            "Churn Risk",
+                            "Remaining"
+                        ],
+
+                        datasets: [
+
+                            {
+
+                                data: [
+
+                                    probability,
+
+                                    Math.max(
+                                        0,
+                                        100 - probability
+                                    )
+
+                                ]
+
+                            }
+
+                        ]
+
+                    },
+
+                    options: {
+
+                        responsive: true,
+
+                        maintainAspectRatio:
+                            false,
+
+                        cutout: "72%",
+
+                        plugins: {
+
+                            legend: {
+
+                                position:
+                                    "bottom",
+
+                                ...commonLegend
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            )
+
+        );
+
+    }
+
+
+    /* ==========================================
+       CHARGES
+    =========================================== */
+
+    const chargesCanvas =
+        document.getElementById(
+            "chargesChart"
+        );
+
+
+    if (chargesCanvas) {
+
+        benefitCharts.push(
+
+            new Chart(
+                chargesCanvas,
+                {
+
+                    type: "bar",
+
+                    data: {
+
+                        labels: [
+                            "Monthly",
+                            "Total"
+                        ],
+
+                        datasets: [
+
+                            {
+
+                                label:
+                                    "Charges",
+
+                                data: [
+                                    monthly,
+                                    total
+                                ],
+
+                                borderRadius:
+                                    8
+
+                            }
+
+                        ]
+
+                    },
+
+                    options: {
+
+                        responsive: true,
+
+                        maintainAspectRatio:
+                            false,
+
+                        plugins: {
+
+                            legend: {
+
+                                display:
+                                    false
+
+                            }
+
+                        },
+
+                        scales: {
+
+                            x: {
+
+                                ticks: {
+
+                                    color:
+                                        "#aeb3c4"
+
+                                },
+
+                                grid: {
+
+                                    display:
+                                        false
+
+                                }
+
+                            },
+
+                            y: {
+
+                                beginAtZero:
+                                    true,
+
+                                ticks: {
+
+                                    color:
+                                        "#aeb3c4"
+
+                                },
+
+                                grid: {
+
+                                    color:
+                                        "#30354d"
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            )
+
+        );
+
+    }
+
+
+    /* ==========================================
+       TENURE
+    =========================================== */
+
+    const tenureCanvas =
+        document.getElementById(
+            "tenureChart"
+        );
+
+
+    if (tenureCanvas) {
+
+        benefitCharts.push(
+
+            new Chart(
+                tenureCanvas,
+                {
+
+                    type: "bar",
+
+                    data: {
+
+                        labels: [
+                            "Tenure"
+                        ],
+
+                        datasets: [
+
+                            {
+
+                                label:
+                                    "Months",
+
+                                data: [
+                                    tenure
+                                ],
+
+                                borderRadius:
+                                    8
+
+                            }
+
+                        ]
+
+                    },
+
+                    options: {
+
+                        responsive: true,
+
+                        maintainAspectRatio:
+                            false,
+
+                        plugins: {
+
+                            legend: {
+
+                                display:
+                                    false
+
+                            }
+
+                        },
+
+                        scales: {
+
+                            x: {
+
+                                ticks: {
+
+                                    color:
+                                        "#aeb3c4"
+
+                                },
+
+                                grid: {
+
+                                    display:
+                                        false
+
+                                }
+
+                            },
+
+                            y: {
+
+                                beginAtZero:
+                                    true,
+
+                                ticks: {
+
+                                    color:
+                                        "#aeb3c4"
+
+                                },
+
+                                grid: {
+
+                                    color:
+                                        "#30354d"
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            )
+
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   COPY COUPON
+===================================================== */
+
+function copyCoupon(coupon) {
+
+    if (
+        navigator.clipboard &&
+        navigator.clipboard.writeText
+    ) {
+
+        navigator.clipboard
+            .writeText(coupon)
+            .then(
+                function () {
+
+                    if (
+                        typeof showToast ===
+                        "function"
+                    ) {
+
+                        showToast(
+                            "Coupon copied!"
+                        );
+
+                    }
+
+                }
+            )
+            .catch(
+                function () {
+
+                    alert(
+                        "Coupon: " + coupon
+                    );
+
+                }
+            );
+
+    } else {
+
+        alert(
+            "Coupon: " + coupon
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   OPEN CUSTOMER FROM URL
+===================================================== */
+
+(function () {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+
+    const selected =
+        params.get("customer");
+
+
+    if (selected) {
+
+        loadBenefit(selected);
+
+    }
+
+})();
+
+</script>
+
+{% endblock %}

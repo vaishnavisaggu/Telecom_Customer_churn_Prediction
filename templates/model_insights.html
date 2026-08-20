@@ -1,0 +1,938 @@
+{% extends "base.html" %}
+
+{% block title %}Model Insights{% endblock %}
+
+
+{% block content %}
+
+<style>
+
+/* =========================================================
+   MODEL INSIGHTS PAGE
+   Matches the supplied reference screenshots
+========================================================= */
+
+.model-insights-page {
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 0 34px 70px;
+
+    background: #f7f8fb;
+    color: #202333;
+}
+
+
+/* =========================================================
+   MODEL PERFORMANCE HEADER
+========================================================= */
+
+.mi-performance-header {
+    width: 100%;
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 30px;
+
+    padding-top: 8px;
+    margin-bottom: 34px;
+}
+
+.mi-performance-left {
+    flex: 1;
+}
+
+.mi-section-label {
+    margin-bottom: 10px;
+
+    color: #8589ee;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+}
+
+.mi-main-heading {
+    margin: 0;
+
+    color: #252839;
+
+    font-size: 31px;
+    font-weight: 500;
+
+    line-height: 1.25;
+}
+
+.mi-description {
+    margin: 10px 0 0;
+
+    color: #a0a4b1;
+
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.mi-predict-button {
+    flex-shrink: 0;
+
+    margin-top: 26px;
+
+    padding: 11px 17px;
+
+    background: #5268d9;
+
+    border-radius: 7px;
+
+    color: #ffffff;
+
+    text-decoration: none;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    box-shadow: 0 3px 8px rgba(82, 104, 217, 0.16);
+}
+
+.mi-predict-button:hover {
+    background: #4359ca;
+}
+
+
+/* =========================================================
+   MODEL COMPARISON CARD
+========================================================= */
+
+.mi-comparison-card {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 22px 24px 18px;
+
+    background: #ffffff;
+
+    border: 1px solid #edf0f4;
+
+    border-radius: 8px;
+
+    box-shadow:
+        0 3px 12px rgba(35, 40, 60, 0.025);
+
+    margin-bottom: 39px;
+}
+
+.mi-card-label {
+    margin-bottom: 8px;
+
+    color: #9296a8;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.mi-card-title {
+    margin: 0 0 20px;
+
+    color: #3c3f4d;
+
+    font-size: 16px;
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.mi-table-container {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+.mi-table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    table-layout: fixed;
+}
+
+.mi-table th {
+    padding: 9px 12px;
+
+    text-align: left;
+
+    color: #9ea2ae;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    letter-spacing: 0.5px;
+
+    text-transform: uppercase;
+
+    border-bottom: 1px solid #f0f1f4;
+}
+
+.mi-table td {
+    padding: 13px 12px;
+
+    color: #858996;
+
+    font-size: 12px;
+
+    border-bottom: 1px solid #f1f2f5;
+}
+
+.mi-table th:first-child,
+.mi-table td:first-child {
+    width: 27%;
+}
+
+.mi-table th:not(:first-child),
+.mi-table td:not(:first-child) {
+    width: 14.6%;
+}
+
+.mi-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.mi-model-name {
+    color: #777b89 !important;
+    font-weight: 500;
+}
+
+.mi-best-row {
+    background: #fbfdfb;
+}
+
+.mi-best-row .mi-model-name {
+    color: #60846f !important;
+    font-weight: 600;
+}
+
+.mi-best {
+    display: inline-block;
+
+    margin-left: 7px;
+
+    color: #66a27e;
+
+    font-size: 8px;
+    font-weight: 800;
+
+    letter-spacing: 0.4px;
+}
+
+.mi-dataset-note {
+    margin-top: 13px;
+
+    color: #a5a8b3;
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   GRAPH
+========================================================= */
+
+.mi-graph-section {
+    width: 100%;
+}
+
+.mi-graph-label {
+    margin-bottom: 8px;
+
+    color: #9296a8;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    letter-spacing: 1.6px;
+
+    text-transform: uppercase;
+}
+
+.mi-graph-title {
+    margin: 0 0 16px;
+
+    color: #3c3f4d;
+
+    font-size: 16px;
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   CHART BOX
+========================================================= */
+
+.mi-chart-card {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 18px 24px 24px;
+
+    background: #ffffff;
+
+    border: 1px solid #edf0f4;
+
+    border-radius: 8px;
+
+    box-shadow:
+        0 3px 12px rgba(35, 40, 60, 0.025);
+}
+
+.mi-chart-wrapper {
+    position: relative;
+
+    width: 100%;
+
+    height: 500px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 950px) {
+
+    .model-insights-page {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+
+    .mi-performance-header {
+        flex-direction: column;
+    }
+
+    .mi-predict-button {
+        margin-top: 0;
+    }
+
+    .mi-table {
+        min-width: 760px;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .model-insights-page {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .mi-main-heading {
+        font-size: 25px;
+    }
+
+    .mi-chart-wrapper {
+        height: 390px;
+    }
+
+}
+
+</style>
+
+
+
+<div class="model-insights-page">
+
+
+    <!-- =====================================================
+         MODEL PERFORMANCE
+    ====================================================== -->
+
+    <section class="mi-performance-header">
+
+        <div class="mi-performance-left">
+
+            <div class="mi-section-label">
+                Model Performance
+            </div>
+
+            <h2 class="mi-main-heading">
+                How the churn model was built.
+            </h2>
+
+            <p class="mi-description">
+                XGBoost, Random Forest, Decision Tree, Gradient Boost,
+                and Logistic Regression were trained and compared on the same
+                customer data.
+            </p>
+
+        </div>
+
+
+        <a
+            href="{{ url_for('predict') }}"
+            class="mi-predict-button"
+        >
+            Try a Prediction →
+        </a>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         COMPARISON
+    ====================================================== -->
+
+    <section class="mi-comparison-card">
+
+        <div class="mi-card-label">
+            Comparison
+        </div>
+
+        <h3 class="mi-card-title">
+            Accuracy by model
+        </h3>
+
+
+        {% if insights and insights.models %}
+
+        <div class="mi-table-container">
+
+            <table class="mi-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Model
+                        </th>
+
+                        <th>
+                            Accuracy
+                        </th>
+
+                        <th>
+                            Precision
+                        </th>
+
+                        <th>
+                            Recall
+                        </th>
+
+                        <th>
+                            F1 Score
+                        </th>
+
+                        <th>
+                            ROC AUC
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for model in insights.models %}
+
+                    <tr
+                        {% if model.best %}
+                        class="mi-best-row"
+                        {% endif %}
+                    >
+
+                        <td class="mi-model-name">
+
+                            {{ model.name }}
+
+                            {% if model.best %}
+
+                            <span class="mi-best">
+                                BEST
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+                            {{ "%.2f"|format(model.accuracy) }}%
+                        </td>
+
+
+                        <td>
+                            {{ "%.2f"|format(model.precision) }}%
+                        </td>
+
+
+                        <td>
+                            {{ "%.2f"|format(model.recall) }}%
+                        </td>
+
+
+                        <td>
+                            {{ "%.2f"|format(model.f1) }}%
+                        </td>
+
+
+                        <td>
+                            {{ "%.2f"|format(model.roc_auc) }}%
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <div class="mi-dataset-note">
+
+            Trained on
+            {{ insights.train_count }}
+            customers, evaluated on
+            {{ insights.test_count }}
+            held-out customers.
+            Selection metric: F1 score.
+
+        </div>
+
+
+        {% else %}
+
+        <div class="mi-dataset-note">
+            Model performance data is unavailable.
+        </div>
+
+        {% endif %}
+
+    </section>
+
+
+
+    <!-- =====================================================
+         GRAPH
+    ====================================================== -->
+
+    <section class="mi-graph-section">
+
+        <div class="mi-graph-label">
+            Graph
+        </div>
+
+        <h3 class="mi-graph-title">
+            Accuracy vs F1 comparison
+        </h3>
+
+
+        <div class="mi-chart-card">
+
+            <div class="mi-chart-wrapper">
+
+                <canvas id="accuracyF1Chart"></canvas>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+</div>
+
+
+
+{% endblock %}
+
+
+
+{% block scripts %}
+
+<script>
+
+/* =========================================================
+   MODEL INSIGHTS CHART
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const canvas =
+            document.getElementById(
+                "accuracyF1Chart"
+            );
+
+        if (!canvas) {
+            return;
+        }
+
+
+        const models =
+            {{ insights.models | tojson | safe }};
+
+
+        if (
+            !models ||
+            models.length === 0
+        ) {
+            return;
+        }
+
+
+        /* -------------------------------------------------
+           LABELS
+        ------------------------------------------------- */
+
+        const labels =
+            models.map(
+                function (model) {
+
+                    return model.name;
+
+                }
+            );
+
+
+        /* -------------------------------------------------
+           ACCURACY
+        ------------------------------------------------- */
+
+        const accuracy =
+            models.map(
+                function (model) {
+
+                    return Number(
+                        model.accuracy
+                    );
+
+                }
+            );
+
+
+        /* -------------------------------------------------
+           F1
+        ------------------------------------------------- */
+
+        const f1 =
+            models.map(
+                function (model) {
+
+                    return Number(
+                        model.f1
+                    );
+
+                }
+            );
+
+
+        /* -------------------------------------------------
+           CUSTOM VALUE LABEL PLUGIN
+           Shows 73.8, 61.4 etc. above bars
+        ------------------------------------------------- */
+
+        const valueLabels = {
+
+            id: "valueLabels",
+
+            afterDatasetsDraw(chart) {
+
+                const {
+                    ctx
+                } = chart;
+
+                ctx.save();
+
+                chart.data.datasets.forEach(
+                    function (
+                        dataset,
+                        datasetIndex
+                    ) {
+
+                        const meta =
+                            chart.getDatasetMeta(
+                                datasetIndex
+                            );
+
+                        meta.data.forEach(
+                            function (
+                                bar,
+                                index
+                            ) {
+
+                                const value =
+                                    dataset.data[index];
+
+                                ctx.fillStyle =
+                                    "#555a66";
+
+                                ctx.font =
+                                    "12px Arial";
+
+                                ctx.textAlign =
+                                    "center";
+
+                                ctx.textBaseline =
+                                    "bottom";
+
+                                ctx.fillText(
+                                    Number(value)
+                                        .toFixed(1),
+                                    bar.x,
+                                    bar.y - 6
+                                );
+
+                            }
+                        );
+
+                    }
+                );
+
+                ctx.restore();
+
+            }
+
+        };
+
+
+        /* -------------------------------------------------
+           CHART
+        ------------------------------------------------- */
+
+        new Chart(
+            canvas,
+            {
+
+                type: "bar",
+
+
+                data: {
+
+                    labels: labels,
+
+
+                    datasets: [
+
+                        {
+
+                            label: "Accuracy %",
+
+                            data: accuracy,
+
+                            backgroundColor:
+                                "#287bd4",
+
+                            borderColor:
+                                "#287bd4",
+
+                            borderWidth: 0,
+
+                            barPercentage: 0.78,
+
+                            categoryPercentage: 0.62
+
+                        },
+
+
+                        {
+
+                            label: "F1 Score %",
+
+                            data: f1,
+
+                            backgroundColor:
+                                "#d89500",
+
+                            borderColor:
+                                "#d89500",
+
+                            borderWidth: 0,
+
+                            barPercentage: 0.78,
+
+                            categoryPercentage: 0.62
+
+                        }
+
+                    ]
+
+                },
+
+
+                plugins: [
+                    valueLabels
+                ],
+
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+
+                    animation: {
+
+                        duration: 600
+
+                    },
+
+
+                    plugins: {
+
+                        legend: {
+
+                            position: "top",
+
+                            align: "end",
+
+                            labels: {
+
+                                boxWidth: 28,
+
+                                boxHeight: 12,
+
+                                padding: 15,
+
+                                font: {
+
+                                    size: 11
+
+                                }
+
+                            }
+
+                        },
+
+
+                        tooltip: {
+
+                            callbacks: {
+
+                                label:
+                                    function (context) {
+
+                                        return (
+                                            context.dataset.label +
+                                            ": " +
+                                            Number(
+                                                context.parsed.y
+                                            ).toFixed(1) +
+                                            "%"
+                                        );
+
+                                    }
+
+                            }
+
+                        }
+
+                    },
+
+
+                    scales: {
+
+                        y: {
+
+                            beginAtZero: true,
+
+                            min: 0,
+
+                            max: 100,
+
+
+                            ticks: {
+
+                                stepSize: 20,
+
+                                font: {
+
+                                    size: 11
+
+                                }
+
+                            },
+
+
+                            title: {
+
+                                display: true,
+
+                                text: "Score (%)",
+
+                                font: {
+
+                                    size: 12
+
+                                }
+
+                            },
+
+
+                            grid: {
+
+                                color: "#dddddd",
+
+                                lineWidth: 1
+
+                            }
+
+                        },
+
+
+                        x: {
+
+                            ticks: {
+
+                                font: {
+
+                                    size: 11
+
+                                },
+
+                                maxRotation: 15,
+
+                                minRotation: 0
+
+                            },
+
+
+                            grid: {
+
+                                display: false
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+    }
+
+);
+
+</script>
+
+{% endblock %}

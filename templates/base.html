@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>
+Telecom Retention AI
+</title>
+
+<link
+rel="stylesheet"
+href="{{ url_for('static', filename='style.css') }}"
+>
+
+<script
+src="https://cdn.jsdelivr.net/npm/chart.js">
+</script>
+
+</head>
+
+<body>
+
+<div class="app">
+
+<aside class="sidebar">
+
+<div class="brand">
+
+<div class="brand-icon">
+TR
+</div>
+
+<div>
+
+<b>
+Telecom Retention
+</b>
+
+<span>
+AI Intelligence
+</span>
+
+</div>
+
+</div>
+
+<nav>
+
+<a
+href="/"
+class="{% if request.path == '/' %}active{% endif %}">
+<span>⌂</span>
+Dashboard
+</a>
+
+<a
+href="/customers"
+class="{% if request.path == '/customers' %}active{% endif %}">
+<span>♙</span>
+Customers
+</a>
+
+<a
+href="/analytics"
+class="{% if request.path == '/analytics' %}active{% endif %}">
+<span>◒</span>
+Analytics
+</a>
+<a
+    href="{{ url_for('model_insights') }}"
+    class="nav-item {% if request.endpoint == 'model_insights' %}active{% endif %}"
+>
+    <span class="nav-icon">◫</span>
+    <span>Model Insights</span>
+</a>
+
+<a
+href="/predict"
+class="{% if request.path == '/predict' %}active{% endif %}">
+<span>✦</span>
+Predict Churn
+</a>
+
+<a
+href="/benefits"
+class="{% if request.path == '/benefits' %}active{% endif %}">
+<span>✦</span>
+Benefits & Coupons
+</a>
+
+<a
+href="/feedback"
+class="{% if request.path == '/feedback' %}active{% endif %}">
+<span>✉</span>
+Customer Feedback
+</a>
+
+</nav>
+
+<div class="side-card">
+
+<div class="online-dot"></div>
+
+<b>
+AI Retention Engine
+</b>
+
+<small>
+Monitoring customer signals in real time.
+</small>
+
+</div>
+
+</aside>
+
+
+<main class="main">
+
+<header class="topbar">
+
+<div>
+
+<span class="eyebrow">
+CUSTOMER INTELLIGENCE PLATFORM
+</span>
+
+<h1>
+{% block title %}
+Telecom Retention AI
+{% endblock %}
+</h1>
+
+</div>
+
+<div class="status">
+
+<i></i>
+
+AI Engine Online
+
+</div>
+
+</header>
+
+
+{% block content %}
+{% endblock %}
+
+</main>
+
+</div>
+
+
+<div id="toast"></div>
+
+
+<script
+src="{{ url_for('static', filename='script.js') }}">
+</script>
+
+{% block scripts %}
+{% endblock %}
+
+</body>
+
+</html>

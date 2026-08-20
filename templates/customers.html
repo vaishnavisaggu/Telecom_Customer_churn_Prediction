@@ -1,0 +1,521 @@
+{% extends "base.html" %}
+
+{% block title %}
+Customer Intelligence
+{% endblock %}
+
+
+{% block content %}
+
+<div class="page-intro">
+
+<div>
+
+<span class="tag">
+CUSTOMER 360
+</span>
+
+<h2>
+Every customer. One clear risk story.
+</h2>
+
+<p>
+Click any customer to see their complete
+customer profile and AI prediction.
+</p>
+
+</div>
+
+<a
+href="/benefits"
+class="btn primary">
+Open Benefits Center →
+</a>
+
+</div>
+
+
+<div class="toolbar">
+
+<input
+id="search"
+type="text"
+placeholder="Search customer ID..."
+>
+
+
+<div class="filters">
+
+<button
+class="filter active"
+data-risk="All">
+All
+</button>
+
+<button
+class="filter"
+data-risk="Critical">
+Critical
+</button>
+
+<button
+class="filter"
+data-risk="High">
+High
+</button>
+
+<button
+class="filter"
+data-risk="Medium">
+Medium
+</button>
+
+<button
+class="filter"
+data-risk="Low">
+Low
+</button>
+
+</div>
+
+</div>
+
+
+<div
+class="customer-grid"
+id="customerGrid">
+
+
+{% for c in customers %}
+
+<div
+class="customer-card"
+data-risk="{{ c.Risk }}"
+data-search="{{ c.customerID|lower }}"
+onclick="openCustomer('{{ c.customerID }}')">
+
+
+<div class="customer-top">
+
+<div class="avatar">
+{{ c.customerID[-2:] }}
+</div>
+
+<span
+class="risk-badge {{ c.Risk|lower }}">
+{{ c.Risk }}
+</span>
+
+</div>
+
+
+<h3>
+{{ c.customerID }}
+</h3>
+
+<p>
+{{ c.Contract }}
+·
+{{ c.InternetService }}
+</p>
+
+
+<div class="probability">
+
+<span>
+AI churn probability
+</span>
+
+<b>
+{{ c.ChurnProbability }}%
+</b>
+
+</div>
+
+
+<div class="meter">
+
+<i
+style="width:{{ c.ChurnProbability }}%">
+</i>
+
+</div>
+
+
+<div class="mini-stats">
+
+<div>
+
+<b>
+₹{{ "%.0f"|format(c.MonthlyCharges) }}
+</b>
+
+<small>
+Monthly
+</small>
+
+</div>
+
+
+<div>
+
+<b>
+{{ c.tenure }}
+</b>
+
+<small>
+Months
+</small>
+
+</div>
+
+
+<div>
+
+<b>
+{{ c.PaymentMethod|replace("Electronic check","E-check") }}
+</b>
+
+<small>
+Payment
+</small>
+
+</div>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+
+<!-- CUSTOMER PROFILE MODAL -->
+
+<div
+id="customerModal"
+class="modal hidden">
+
+<div class="modal-box">
+
+<button
+class="close"
+onclick="closeCustomerModal()">
+×
+</button>
+
+<div id="customerDetail">
+</div>
+
+</div>
+
+</div>
+
+
+<!-- LEAVING CUSTOMER POPUP -->
+
+<div
+id="leavingModal"
+class="modal hidden">
+
+<div class="leaving-box">
+
+<div class="warning-icon">
+!
+</div>
+
+<span class="tag">
+RETENTION ALERT
+</span>
+
+<h2>
+This customer may be leaving.
+</h2>
+
+<p id="leavingText">
+</p>
+
+<div class="actions">
+
+<button
+class="btn ghost"
+onclick="closeLeaving()">
+Later
+</button>
+
+<button
+class="btn primary"
+id="benefitButton">
+Show Benefits →
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+const customers =
+{{ customers|tojson }};
+
+
+function openCustomer(id)
+{
+
+const customer =
+customers.find(
+item => item.customerID === id
+);
+
+if (!customer)
+return;
+
+
+document.getElementById(
+"customerDetail"
+).innerHTML = `
+
+<span class="tag">
+CUSTOMER 360 PROFILE
+</span>
+
+<h2>
+${customer.customerID}
+</h2>
+
+
+<div
+class="big-risk ${customer.Risk.toLowerCase()}">
+
+<strong>
+${customer.ChurnProbability}%
+</strong>
+
+<span>
+AI churn probability
+<br>
+${customer.Risk} risk
+</span>
+
+</div>
+
+
+<div class="detail-grid">
+
+<div>
+<small>Monthly Charges</small>
+<b>
+₹${Number(customer.MonthlyCharges).toFixed(0)}
+</b>
+</div>
+
+<div>
+<small>Tenure</small>
+<b>
+${customer.tenure} months
+</b>
+</div>
+
+<div>
+<small>Contract</small>
+<b>
+${customer.Contract}
+</b>
+</div>
+
+<div>
+<small>Internet Service</small>
+<b>
+${customer.InternetService}
+</b>
+</div>
+
+<div>
+<small>Payment Method</small>
+<b>
+${customer.PaymentMethod}
+</b>
+</div>
+
+<div>
+<small>Gender</small>
+<b>
+${customer.gender}
+</b>
+</div>
+
+</div>
+
+
+<div class="actions">
+
+<a
+class="btn primary"
+href="/benefits?customer=${customer.customerID}">
+View Benefits →
+</a>
+
+<a
+class="btn ghost"
+href="/feedback">
+Customer Feedback
+</a>
+
+</div>
+
+`;
+
+
+document
+.getElementById("customerModal")
+.classList.remove("hidden");
+
+
+if (
+Number(customer.ChurnProbability) >= 60
+)
+{
+
+setTimeout(
+() => showLeavingPopup(customer),
+500
+);
+
+}
+
+}
+
+
+function showLeavingPopup(customer)
+{
+
+document.getElementById(
+"leavingText"
+).textContent =
+
+`${customer.customerID} has a ${customer.ChurnProbability}% predicted churn probability. Give this customer a personalized retention benefit before they decide to leave.`;
+
+
+document.getElementById(
+"benefitButton"
+).onclick = function()
+{
+
+window.location.href =
+"/benefits?customer="
++
+customer.customerID;
+
+};
+
+
+document
+.getElementById("leavingModal")
+.classList.remove("hidden");
+
+}
+
+
+function closeCustomerModal()
+{
+
+document
+.getElementById("customerModal")
+.classList.add("hidden");
+
+}
+
+
+function closeLeaving()
+{
+
+document
+.getElementById("leavingModal")
+.classList.add("hidden");
+
+}
+
+
+document
+.querySelectorAll(".filter")
+.forEach(button =>
+{
+
+button.onclick = function()
+{
+
+document
+.querySelectorAll(".filter")
+.forEach(
+b => b.classList.remove("active")
+);
+
+button.classList.add("active");
+
+applyFilters();
+
+};
+
+});
+
+
+document
+.getElementById("search")
+.addEventListener(
+"input",
+applyFilters
+);
+
+
+function applyFilters()
+{
+
+const risk =
+document
+.querySelector(".filter.active")
+.dataset.risk;
+
+const search =
+document
+.getElementById("search")
+.value
+.toLowerCase();
+
+
+document
+.querySelectorAll(".customer-card")
+.forEach(card =>
+{
+
+const riskMatch =
+risk === "All"
+||
+card.dataset.risk === risk;
+
+const searchMatch =
+card.dataset.search
+.includes(search);
+
+
+card.style.display =
+riskMatch && searchMatch
+?
+"block"
+:
+"none";
+
+});
+
+}
+
+</script>
+
+{% endblock %}
